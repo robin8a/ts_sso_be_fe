@@ -1,5 +1,7 @@
+import { userInfo } from 'node:os';
 import { defineBackend } from '@aws-amplify/backend';
 import { aws_cognito as cognito } from 'aws-cdk-lib';
+import type { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
 import {
@@ -12,8 +14,9 @@ import { buildAppClientConfigs } from './auth/app-clients';
 /**
  * TerraSacha SSO backend.
  *
- * Attaches exactly one Cognito domain to the shared user pool via a CDK escape
- * hatch (Requirement 6.1). There is one domain for the pool:
+ * Uses the one Cognito domain Amplify creates for Hosted UI (Requirement 6.1).
+ * A user pool accepts a single domain, so this file sets that domain's prefix
+ * instead of calling addDomain again. There is one domain for the pool:
  *
  *   - Sandbox (no custom domain): a Cognito prefix domain on amazoncognito.com.
  *     Prefix domains are sandbox-only; silent SSO is not treated as satisfied on
@@ -81,33 +84,33 @@ if (defaultClient.writeAttributes.includes(TS_ROLES_ATTRIBUTE)) {
  * run at version V2_0, configured through `LambdaConfig.PreTokenGenerationConfig`
  * with `LambdaVersion = 'V2_0'`.
  *
- * Amplify Gen 2 does not expose the trigger version on `defineAuth`, so this
- * CDK escape hatch promotes the generated trigger to V2:
- *   - read the ARN Amplify already set on the legacy `preTokenGeneration` field;
- *   - set `preTokenGenerationConfig = { lambdaArn, lambdaVersion: 'V2_0' }`.
- * CloudFormation requires the two ARNs to be identical when both are present, so
- * the legacy field is kept pointing at the same function (not cleared).
+ * Amplify Gen 2 does not expose the trigger version on `defineAuth`. CDK only
+ * accepts V2_0 on `UserPoolOperation.PRE_TOKEN_GENERATION_CONFIG`, and the
+ * Lambda lives in a nested stack, so the function object must be passed to
+ * `addTrigger`. Copying a resolved ARN onto `lambdaConfig` turns that
+ * cross-stack reference into a GetAtt of a resource that is not in the auth
+ * template.
+ *
+ * `defineAuth` already registered the same function as the legacy
+ * `preTokenGeneration` trigger. This adds `preTokenGenerationConfig` at V2_0
+ * with that same function, which is what CloudFormation requires.
  */
 const cfnUserPool = backend.auth.resources.cfnResources.cfnUserPool;
-const lambdaConfig = (cfnUserPool.lambdaConfig ?? {}) as {
-  preTokenGeneration?: string;
-  preTokenGenerationConfig?: { lambdaArn?: string; lambdaVersion?: string };
-};
-const preTokenArn =
-  lambdaConfig.preTokenGenerationConfig?.lambdaArn ?? lambdaConfig.preTokenGeneration;
-if (!preTokenArn) {
+const preTokenFunction = cfnUserPool.stack.node.root.node.findAll().find(
+  (construct): construct is IFunction =>
+    construct.node.id === 'pre-token-generation-lambda' &&
+    'functionArn' in construct,
+);
+if (!preTokenFunction) {
   throw new Error(
     'expected a pre-token generation Lambda ARN from defineAuth to promote to V2_0',
   );
 }
-cfnUserPool.lambdaConfig = {
-  ...lambdaConfig,
-  preTokenGeneration: preTokenArn,
-  preTokenGenerationConfig: {
-    lambdaArn: preTokenArn,
-    lambdaVersion: 'V2_0',
-  },
-};
+(userPool as cognito.UserPool).addTrigger(
+  cognito.UserPoolOperation.PRE_TOKEN_GENERATION_CONFIG,
+  preTokenFunction,
+  cognito.LambdaVersion.V2_0,
+);
 
 /**
  * Access-token claims customization is NOT a per-client boolean in Cognito; it
@@ -128,13 +131,16 @@ cfnUserPool.lambdaConfig = {
  */
 cfnUserPool.userPoolTier = 'ESSENTIALS';
 
-const sandboxDomainPrefix = process.env.TS_SSO_DOMAIN_PREFIX ?? 'terrasacha-sso';
-
-userPool.addDomain('TerraSachaSsoDomain', {
-  cognitoDomain: {
-    domainPrefix: sandboxDomainPrefix,
-  },
-});
+const generatedDomain = userPool.node.children.find((child) =>
+  child.node.id.endsWith('UserPoolDomain'),
+);
+if (!generatedDomain) {
+  throw new Error(
+    `expected Amplify to create the Hosted UI domain from externalProviders (children: ${userPool.node.children.map((child) => child.node.id).join(', ')})`,
+  );
+}
+const cfnDomain = generatedDomain.node.findChild('Resource') as cognito.CfnUserPoolDomain;
+cfnDomain.domain = cognitoDomainPrefix();
 
 /**
  * One app client per catalogued application (Task 6, Requirements 1.3, 3.1,
@@ -222,15 +228,21 @@ backend.addOutput({
   },
 });
 
-// Deployed environments use the custom-domain form of addDomain instead of the
-// cognitoDomain form above, binding Hosted UI to auth.<parent-domain>:
-//
-//   import { aws_certificatemanager as acm } from 'aws-cdk-lib';
-//   userPool.addDomain('TerraSachaSsoDomain', {
-//     customDomain: {
-//       domainName: 'auth.<parent-domain>',
-//       certificate: acm.Certificate.fromCertificateArn(stack, 'SsoCert', '<cert-arn>'),
-//     },
-//   });
-//
-// There is still exactly one domain for the pool.
+/**
+ * Cognito prefix domains are unique across the region. `terrasacha-sso` is
+ * already taken, so the sandbox default adds this machine's username.
+ * `TS_SSO_DOMAIN_PREFIX` still overrides it. The running sandbox process must
+ * be restarted after changing that variable; a file save only picks up this
+ * default.
+ */
+function cognitoDomainPrefix(): string {
+  const fromEnv = process.env.TS_SSO_DOMAIN_PREFIX?.trim();
+  const raw = fromEnv && fromEnv.length > 0
+    ? fromEnv
+    : `terrasacha-sso-${userInfo().username}`;
+  const prefix = raw.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 63);
+  return prefix.replace(/^-+|-+$/g, '') || 'terrasacha-sso';
+}
+
+// Deployed environments replace this one prefix domain with a custom domain
+// on auth.<parent-domain>. Do not add a second UserPoolDomain.
