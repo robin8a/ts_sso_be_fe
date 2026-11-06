@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# generated outputs (produced by sso-backend; not the source of truth in git)
+amplify_outputs.json
+amplify_outputs*.json
+amplifyconfiguration*
+
+# IMPORTANT: this repository has NO amplify/ directory by design.
+
+# build
+dist/
+build/
+*.tsbuildinfo
+
+# logs
+*.log
+npm-debug.log*
+
+# env
+.env
+.env.*
+
+# os
+.DS_Store

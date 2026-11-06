@@ -1,0 +1,22 @@
+{
+  "name": "sso-frontend",
+  "version": "1.0.0",
+  "description": "TerraSacha SSO frontend (UI only). Receives amplify_outputs.json from sso-backend. No amplify/ directory.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-amplify": "^6.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "vite": "^5.4.0"
+  }
+}

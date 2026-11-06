@@ -1,0 +1,19 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+        # Download outputs from THIS project's backend (sso-backend) before compile.
+        # Replace <SSO_BACKEND_APP_ID> with the Amplify App ID of sso-backend.
+        - npx ampx generate outputs --app-id <SSO_BACKEND_APP_ID> --branch main
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*

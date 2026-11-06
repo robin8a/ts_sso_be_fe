@@ -1,0 +1,145 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Create the SSO project as two GitHub repositories": [
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929761559
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929769405
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793959766905
+      }
+    ],
+    "2. Add the application and role catalog": [
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929761756
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793959772413
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793959950024
+      }
+    ],
+    "3. Implement the validation chain": [
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929761861
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793959957905
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793960400653
+      }
+    ],
+    "4. Define the custom role parameter and groups": [
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929761963
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793960404308
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793960903757
+      }
+    ],
+    "5. Issue `custom:tsRoles` from group membership": [
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929762082
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793960907121
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793961881899
+      }
+    ],
+    "6. Create one app client per application": [
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929762169
+      },
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793961885310
+      },
+      {
+        "executionId": "f269f419-2733-4435-9a29-b209bec090b3",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793962531012
+      },
+      {
+        "executionId": "f269f419-2733-4435-9a29-b209bec090b3",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793962876004
+      }
+    ],
+    "7. Implement admin role assignment": [
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929762246
+      },
+      {
+        "executionId": "f269f419-2733-4435-9a29-b209bec090b3",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793962879280
+      }
+    ],
+    "8. Create each application as its own Gen 2 project": [
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929762338
+      }
+    ],
+    "9. Build the frontend session in each frontend repository": [
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929762426
+      }
+    ],
+    "10. Verify SSO and authorization end to end": [
+      {
+        "executionId": "7f2114ba-a906-4776-becb-b81833ff54dd",
+        "chatSessionId": "sess_4533c7aa-e5cf-4362-bb55-d7ab92a7d875",
+        "timestamp": 1793929762517
+      }
+    ]
+  }
+}

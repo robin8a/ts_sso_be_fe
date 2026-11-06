@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# amplify
+.amplify/
+amplify_outputs*
+amplifyconfiguration*
+
+# build / sandbox
+dist/
+build/
+*.tsbuildinfo
+
+# logs
+*.log
+npm-debug.log*
+
+# env
+.env
+.env.*
+
+# os
+.DS_Store
