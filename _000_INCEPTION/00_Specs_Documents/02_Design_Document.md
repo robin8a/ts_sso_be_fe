@@ -2,41 +2,64 @@
 
 ## Overview
 
-The central auth project owns one Amplify Gen 2 backend and one Cognito user pool. Every TerraSacha application is a client of that pool. Web SSO uses the Hosted UI session cookie on a shared Cognito domain. Roles are Cognito groups named `ts-<appID>-<role>` and are published in the custom parameter `custom:tsRoles`.
+The SSO project is two GitHub repositories. Its backend owns the Cognito user pool. Its frontend is only the SSO UI. Web SSO uses the Hosted UI session cookie on a shared Cognito domain. Roles are Cognito groups named `ts-<appID>-<role>` and are published in the custom parameter `custom:tsRoles`.
 
-This repository is the central auth owner. `ts-oraculo`, `ts-legalDocs`, `ts-dataDrones`, and `ts-datum` are consumer applications. `ts-datum` is the mobile client (appMovil).
+`ts-oraculo`, `ts-legalDocs`, `ts-dataDrones`, and `ts-datum` are independent projects. Each one has its own backend repository and its own frontend repository, with the same Gen 2 split. `ts-datum` is the mobile client (appMovil). An application backend references the shared pool. It does not create one. An application frontend receives `amplify_outputs.json` from its own backend.
 
 Naming, the validation chain, data models, errors, and tests are specified in the sibling documents. This document defines the runtime architecture.
+
+## Repository layout
+
+Each project is the same shape. Only the SSO backend calls `defineAuth`.
+
+```text
+<project>-backend/                  own GitHub repository
+  amplify/
+    auth/                           defineAuth (SSO) or referenceAuth (application)
+    data/                           that project's data schemas
+    backend.ts
+  package.json
+
+<project>-frontend/                 own GitHub repository
+  src/                              UI only (web or mobile)
+  amplify_outputs.json              generated from this project's backend
+  package.json                      no amplify/ directory
+```
+
+| Project | Backend repository | Frontend repository | Auth |
+| --- | --- | --- | --- |
+| SSO (this project) | `sso-backend` | `sso-frontend` | `defineAuth`, owns the user pool |
+| `ts-oraculo` | `ts-oraculo-backend` | `ts-oraculo-frontend` | `referenceAuth` |
+| `ts-legalDocs` | `ts-legalDocs-backend` | `ts-legalDocs-frontend` | `referenceAuth` |
+| `ts-dataDrones` | `ts-dataDrones-backend` | `ts-dataDrones-frontend` | `referenceAuth` |
+| `ts-datum` | `ts-datum-backend` | `ts-datum-frontend` | `referenceAuth`, mobile UI |
+
+A new application adds a new pair of repositories. It does not add a second user pool, and its frontend does not build against the SSO backend App ID.
 
 ## Architecture
 
 ```text
-+-------------------------------------------+
-| Cognito Hosted UI domain                  |
-| custom: auth.<parent-domain>              |
-| sandbox: <prefix>.auth.<region>.amazoncognito.com |
-+--------------------+----------------------+
-                     | OAuth 2.0 code + PKCE
-                     | sets / reads SSO cookie
-     +---------------+---------------+----------------+
-     |               |               |                |
-+----+-----+   +-----+------+  +-----+------+  +------+------+
-| ts-oraculo|   | ts-legalDocs| | ts-dataDrones| | ts-datum|
-| web client|   | web client  | | web client   | | mobile      |
-+-----------+   +-------------+ +--------------+ +-------------+
-                     |
-                     | ID and access tokens
-                     | claim custom:tsRoles
-                     v
-        +-----------------------------+
-        | Pre-token trigger           |
-        | groups -> custom:tsRoles    |
-        +-----------------------------+
+sso-backend                         owns the user pool, groups, trigger, app clients
+    |  sandbox --outputs-out-dir
+    v
+sso-frontend                        SSO UI only
+
+sso-backend custom.appClients
+    |  user pool id + that app's client id
+    v
+ts-oraculo-backend                  referenceAuth, own data and functions
+    |  ampx generate outputs --app-id <ts-oraculo backend app id>
+    v
+ts-oraculo-frontend                 Amplify.configure(its own outputs)
+
+ts-legalDocs, ts-dataDrones, and ts-datum use the same pair shape.
+All frontends sign in through one Hosted UI domain (auth.<parent-domain>)
+with Authorization Code + PKCE. Tokens carry custom:tsRoles.
 ```
 
 Deployed web SSO uses a custom domain on the same parent domain as the web apps, so the Hosted UI cookie is first-party during the redirect. A Cognito prefix domain is sandbox-only. Tokens stay in Amplify storage per origin. Silent sign-in happens when the next app redirects to the shared domain and Cognito still has the session cookie.
 
-Separate app clients are required. One shared client with many callback URLs is not used, so each application can limit its own redirect URLs and attribute permissions.
+Separate app clients are required. One shared client with many callback URLs is not used, so each application can limit its own redirect URLs and attribute permissions. The SSO backend creates those clients. `referenceAuth` in each application backend pins that application's client, so the frontend outputs from that backend already contain the right `user_pool_client_id`.
 
 ## Naming
 
@@ -151,47 +174,75 @@ An admin operation in the central backend is the only writer:
 
 The next token still passes through the trigger, which recomputes the claim from groups.
 
-### Consumer binding
+### Outputs link
 
-Consumer apps do not define a user pool.
-
-Option A, Amplify backend in the consumer, uses `referenceAuth` with the shared user pool id, that app's client id, and the identity-pool identifiers only when the consumer calls AWS with Amplify credentials:
+`referenceAuth` lives in the application backend, not in the frontend. The SSO backend publishes the values those backends pass in:
 
 ```typescript
-import { referenceAuth } from '@aws-amplify/backend';
-
-export const auth = referenceAuth({
-  userPoolId: '<region>_<poolId>',
-  identityPoolId: '<region>:<identityPoolId>',
-  authRoleArn: '<authenticated-role-arn>',
-  unauthRoleArn: '<unauthenticated-role-arn>',
-  userPoolClientId: '<this-app-client-id>',
-});
-```
-
-Option B, frontend only, uses `Amplify.configure` with the same pool id, that app's client id, and the shared domain. SSO does not require an identity pool. Apps that only need user tokens use Option B.
-
-```typescript
-Amplify.configure({
-  Auth: {
-    Cognito: {
-      userPoolId: '<region>_<poolId>',
-      userPoolClientId: '<this-app-client-id>',
-      loginWith: {
-        oauth: {
-          domain: 'auth.<parent-domain>',
-          scopes: ['openid', 'email', 'profile'],
-          redirectSignIn: [window.location.origin + '/'],
-          redirectSignOut: [window.location.origin + '/logout'],
-          responseType: 'code',
-        },
-      },
+backend.addOutput({
+  custom: {
+    appClients: {
+      'ts-oraculo': { userPoolClientId: '<oraculo-client-id>' },
+      'ts-legalDocs': { userPoolClientId: '<legalDocs-client-id>' },
+      'ts-dataDrones': { userPoolClientId: '<dataDrones-client-id>' },
+      'ts-datum': { userPoolClientId: '<datum-client-id>' },
     },
   },
 });
 ```
 
-`redirectSignIn` and `redirectSignOut` must already be registered on that app client. The mobile client passes its registered app URLs instead of `window.location`.
+An application backend binds the shared pool and does not create one:
+
+```typescript
+import { referenceAuth } from '@aws-amplify/backend';
+
+export const auth = referenceAuth({
+  userPoolId: '<sso-user-pool-id>',
+  identityPoolId: '<sso-identity-pool-id>',
+  authRoleArn: '<sso-authenticated-role-arn>',
+  unauthRoleArn: '<sso-unauthenticated-role-arn>',
+  userPoolClientId: '<client-id-for-this-appKey>',
+});
+```
+
+`userPoolClientId` is `custom.appClients[<appKey>].userPoolClientId` from the SSO backend outputs. The pre-token trigger stays on the SSO user pool. Application backends do not add a second trigger.
+
+Local development starts in that project's backend and writes into that project's frontend:
+
+```bash
+npx ampx sandbox --outputs-out-dir ../path-to-your-frontend-repo/
+```
+
+Amplify Hosting deploys that project's backend first and records its App ID. That project's frontend build downloads those outputs before compile. The App ID is the paired backend, not the SSO backend. The PDF example uses branch `main`:
+
+```yaml
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+        - npx ampx generate outputs --app-id <YOUR_BACKEND_APP_ID> --branch main
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+```
+
+`ts-datum-frontend` uses the same command with the `ts-datum-backend` App ID. `amplify_outputs.json` is generated. It is not edited by hand and it is not the source of truth in git.
+
+The frontend configures Amplify from its own generated file:
+
+```typescript
+import { Amplify } from 'aws-amplify';
+import outputs from '../amplify_outputs.json';
+
+Amplify.configure(outputs);
+```
+
+That file's `auth.user_pool_id` is the shared pool, and `auth.user_pool_client_id` is the client `referenceAuth` bound for this application. Callback and logout URLs in the file must already be registered on that client. The mobile client uses its registered app URLs. If the user pool id is not the SSO pool, or the client id is missing, the frontend stops and does not start Hosted UI.
 
 ### Frontend session
 
@@ -226,3 +277,4 @@ The suffix `administrators` is the shared administrator role for the application
 - `05_Error_Handling.md` — failure codes and user-facing behavior
 - `06_Testing_Strategy.md` — SSO, claim, and naming tests
 - `07_Tasks.md` — implementation plan
+- `08_Web_SSO_Integration.md` — how a web project connects. Mobile clients are not in that guide.

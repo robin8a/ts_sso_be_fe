@@ -101,7 +101,55 @@ interface AppClientRecord {
 }
 ```
 
-`userPoolId` and `domain` are identical for every record. `userPoolClientId` is unique per `appKey`. Consumers receive their own `AppClientRecord` plus, when they use `referenceAuth` to call AWS, the shared identity pool id and authenticated and unauthenticated role ARNs.
+`userPoolId` and `domain` are identical for every record. `userPoolClientId` is unique per `appKey`. The SSO backend creates the client. The application backend passes that id to `referenceAuth`. The application frontend reads it from its own generated outputs.
+
+## Independent projects
+
+```typescript
+interface IndependentProject {
+  name: string;
+  backendRepository: string;
+  frontendRepository: string;
+  ownsUserPool: boolean;
+  appKey?: string;
+}
+```
+
+| name | backendRepository | frontendRepository | ownsUserPool | appKey |
+| --- | --- | --- | --- | --- |
+| SSO | `sso-backend` | `sso-frontend` | yes | |
+| Oraculo | `ts-oraculo-backend` | `ts-oraculo-frontend` | no | `ts-oraculo` |
+| LegalDocs | `ts-legalDocs-backend` | `ts-legalDocs-frontend` | no | `ts-legalDocs` |
+| DataDrones | `ts-dataDrones-backend` | `ts-dataDrones-frontend` | no | `ts-dataDrones` |
+| Datum | `ts-datum-backend` | `ts-datum-frontend` | no | `ts-datum` |
+
+Each row is two GitHub repositories. `frontendRepository` has no `amplify/` directory. Its Amplify App ID is not stored here; the frontend build receives the App ID of `backendRepository` only.
+
+## Amplify outputs
+
+```typescript
+interface AmplifyOutputs {
+  auth: {
+    user_pool_id: string;
+    user_pool_client_id: string;
+    aws_region: string;
+    oauth: {
+      domain: string;
+      scopes: string[];
+      redirect_sign_in_uri: string[];
+      redirect_sign_out_uri: string[];
+      response_type: 'code';
+    };
+  };
+  custom: {
+    appClients: Record<string, { userPoolClientId: string }>;
+  };
+}
+```
+
+`custom.appClients` is published by `sso-backend` only. Application backends copy the entry for their `appKey` into `referenceAuth`. They do not copy another application's client id.
+
+An application frontend's generated file uses the same `auth` shape. After `referenceAuth`, `auth.user_pool_id` is the SSO pool and `auth.user_pool_client_id` is that application's client. The application frontend does not read `custom.appClients` and does not call the SSO backend App ID. `auth.oauth.domain` is the shared Cognito domain on every project's outputs.
 
 ## Authorization result
 

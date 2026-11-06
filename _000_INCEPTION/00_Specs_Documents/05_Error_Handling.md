@@ -18,6 +18,10 @@ Failures fall into three groups: the user can retry sign-in, the user is signed 
 | `ROLE_UNKNOWN_APP` | Pattern matches but `ts-<appID>` is not a catalog application | Operator message names the application key | Do not create a group. |
 | `ROLE_NOT_IN_CATALOG` | Pattern and application match but the role parameter is not catalogued | Operator message names the role parameter | Do not assign. If a stray group is seen at token issue, drop it from `custom:tsRoles` and log the code. |
 | `ROLE_NOT_WRITABLE` | A client tries to set `custom:tsRoles` | Hosted UI or API rejects the write | Cognito client write attributes exclude this attribute. |
+| `OUTPUTS_MISSING` | The frontend starts without `amplify_outputs.json` | "This application is not configured." | Do not call Hosted UI. |
+| `OUTPUTS_CLIENT_MISSING` | This application's outputs have no `user_pool_client_id`, or `sso-backend` has no `custom.appClients` entry for its application key | "This application is not configured." | Do not sign in with another application's client. |
+| `OUTPUTS_POOL_MISMATCH` | Generated `auth.user_pool_id` is not the SSO user pool | "This application is not configured." | Do not start Hosted UI. The application backend called `defineAuth` or pointed `referenceAuth` at the wrong pool. |
+| `OUTPUTS_GENERATE_FAILED` | `npx ampx generate outputs` fails in that project's frontend build | The build fails | Do not deploy that frontend. |
 
 `CLAIM_MISSING` and `UNAUTHORIZED_APP` share one sentence so the UI does not reveal which other applications the user can open. Logs for `UNAUTHORIZED_APP` include the caller application key, not the full claim, unless the environment is the sandbox.
 
@@ -30,6 +34,8 @@ Cognito user-existence responses on the Hosted UI must not tell the caller wheth
 Global sign-out is one action. If it fails, the client shows `GLOBAL_SIGNOUT_FAILED` and leaves local tokens in place. Clearing only the local origin would make this application look signed out while the Cognito cookie still opens the others.
 
 `ts-datum` uses the same codes. A bad mobile callback is `CALLBACK_NOT_ALLOWED`. A user with only `ts-oraculo-administrators` who opens the mobile app gets `UNAUTHORIZED_APP`.
+
+A missing or failed `amplify_outputs.json` is a configuration failure, not a failed password. The frontend shows `OUTPUTS_MISSING`, `OUTPUTS_CLIENT_MISSING`, or `OUTPUTS_POOL_MISMATCH` and does not start `signInWithRedirect`. The hosting build stops on `OUTPUTS_GENERATE_FAILED`. The App ID in that build is the paired backend for that project.
 
 ## Assignment failures
 

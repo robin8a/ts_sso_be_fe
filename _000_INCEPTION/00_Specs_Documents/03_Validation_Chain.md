@@ -2,6 +2,8 @@
 
 The chain checks application keys, role parameters, and the `custom:tsRoles` claim before a role is assigned or an application is entered. It is the only parser for the `<ts>-<appID>-<role>` standard.
 
+Strict assignment and the pre-token filter run only in `sso-backend`, under `amplify/`. Application backends do not add a pre-token trigger. Authorize mode runs in each application's frontend after `Amplify.configure` reads the `amplify_outputs.json` generated from that application's backend. Frontends do not import any `amplify/` tree. They apply the rules in this document to the claim and to their own application key.
+
 ## Grammar
 
 ```text

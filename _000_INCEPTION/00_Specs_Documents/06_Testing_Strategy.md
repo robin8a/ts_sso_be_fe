@@ -34,7 +34,19 @@ Sandbox uses the shared prefix domain. Deployed verification of silent SSO uses 
 4. Call `signOut({ global: true })` from `ts-oraculo`. Confirm the next visit to `ts-legalDocs` requires Hosted UI again and the revoked refresh token cannot be renewed.
 5. Assign no `ts-datum-<role>`. Sign in on the mobile client with the same pool. Confirm the token claim still lists the web roles and the mobile authorizer returns `noRole`.
 
-Consumer configuration tests use a fixture `Amplify.configure` (and `referenceAuth` when the identity pool is present) and assert the shared user pool id, the shared domain, scopes `openid`, `email`, and `profile`, and response type `code`. They assert the client id is the one named for that application key.
+Application-backend tests assert `referenceAuth` receives the SSO user pool id, identity pool id, both role ARNs, and `custom.appClients[appKey].userPoolClientId`. They assert the application backend does not call `defineAuth`.
+
+Frontend tests use the `amplify_outputs.json` generated from that application's backend. `Amplify.configure` receives the shared user pool id, the shared domain, scopes `openid`, `email`, and `profile`, and response type `code`. `auth.user_pool_client_id` equals that application's published client id.
+
+## Repository split
+
+- `sso-backend` contains `amplify/auth`, `amplify/data`, and `amplify/backend.ts`, and it contains no UI project. `sso-frontend` has no `amplify/` directory.
+- Each application is two GitHub repositories. Its backend has its own `amplify/` tree and uses `referenceAuth`. Its frontend has no `amplify/` directory.
+- `npx ampx sandbox --outputs-out-dir` is run in a project's backend and writes `amplify_outputs.json` only into that project's frontend.
+- Each frontend `amplify.yml` preBuild runs `npx ampx generate outputs --app-id <that project's backend App ID> --branch <that backend branch>`. `ts-datum-frontend` uses the `ts-datum-backend` App ID, not the SSO App ID.
+- Outputs whose user pool id is not the SSO pool fail closed (`OUTPUTS_POOL_MISMATCH`).
+- A missing client id fails closed (`OUTPUTS_CLIENT_MISSING`).
+- A failed `ampx generate outputs` fails that frontend's build (`OUTPUTS_GENERATE_FAILED`).
 
 ## Negative tests
 
