@@ -1,0 +1,216 @@
+/*
+ * TerraSacha launcher styling — earthy/olive natural palette reflecting
+ * terrasacha.com. Warm cream page, dark-olive text, green tile accents.
+ */
+
+:root {
+  /* Brand palette (by prominence). */
+  --ts-olive-dark: #44482c;   /* primary text / headers */
+  --ts-olive: #6e6c35;
+  --ts-green-logo: #70752b;
+  --ts-green-sage: #849b50;
+  --ts-green-light: #b1c181;
+  --ts-cream: #f7f4ea;        /* page background */
+  --ts-cream-warm: #f8f3df;
+  --ts-cream-pale: #faf9f4;   /* card background */
+  --ts-gold: #e8d79a;         /* highlight / border accent */
+  --ts-shadow-olive: #2f331d; /* deep shadow */
+  --ts-white: #ffffff;
+
+  --ts-font: 'Jost', system-ui, -apple-system, sans-serif;
+  --ts-radius: 16px;
+  --ts-shadow-card: 0 6px 20px rgba(47, 51, 29, 0.08);
+  --ts-shadow-card-hover: 0 12px 30px rgba(47, 51, 29, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--ts-font);
+  font-weight: 400;
+  color: var(--ts-olive-dark);
+  background: linear-gradient(180deg, var(--ts-cream-pale) 0%, var(--ts-cream) 100%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Layout ------------------------------------------------------------- */
+
+.launcher {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+}
+
+.launcher__header {
+  text-align: center;
+  margin-bottom: clamp(2rem, 5vw, 3.5rem);
+}
+
+.launcher__logo {
+  display: block;
+  height: 64px;
+  width: auto;
+  margin: 0 auto 1.25rem;
+}
+
+.launcher__title {
+  font-weight: 300;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  letter-spacing: 0.01em;
+  margin: 0;
+  color: var(--ts-olive-dark);
+}
+
+.launcher__subtitle {
+  margin: 0.4rem 0 0;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--ts-olive);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.launcher__footer {
+  margin-top: clamp(2rem, 5vw, 3.5rem);
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--ts-olive);
+}
+
+/* ---- Grid --------------------------------------------------------------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Tiles -------------------------------------------------------------- */
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  min-height: 160px;
+  border-radius: var(--ts-radius);
+  background: var(--ts-cream-pale);
+  border: 1px solid var(--ts-gold);
+  box-shadow: var(--ts-shadow-card);
+}
+
+.tile--active {
+  text-decoration: none;
+  color: var(--ts-olive-dark);
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease,
+    border-color 160ms ease, background 160ms ease;
+}
+
+.tile--active:hover,
+.tile--active:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: var(--ts-shadow-card-hover);
+  border-color: var(--ts-green-sage);
+  background: var(--ts-white);
+}
+
+.tile--active:focus-visible {
+  outline: 3px solid var(--ts-green-logo);
+  outline-offset: 3px;
+}
+
+.tile__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--ts-cream-warm);
+  color: var(--ts-green-logo);
+}
+
+.tile--active:hover .tile__icon,
+.tile--active:focus-visible .tile__icon {
+  color: var(--ts-green-sage);
+}
+
+.tile__icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.tile__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.tile__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 1.15rem;
+  color: var(--ts-olive-dark);
+}
+
+.tile__desc {
+  font-weight: 300;
+  font-size: 0.9rem;
+  color: var(--ts-olive);
+}
+
+.tile__badge {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--ts-green-light);
+  color: var(--ts-olive-dark);
+}
+
+/* ---- Placeholder tiles -------------------------------------------------- */
+
+.tile--placeholder {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--ts-green-light);
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.tile--placeholder .tile__icon {
+  background: transparent;
+  color: var(--ts-green-light);
+}
+
+.tile--placeholder .tile__title {
+  color: var(--ts-olive);
+  font-weight: 400;
+}

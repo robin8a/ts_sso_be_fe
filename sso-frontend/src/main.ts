@@ -1,4 +1,6 @@
 import { Amplify } from 'aws-amplify';
+import './styles.css';
+import { mountAppLauncher } from './app-launcher';
 
 /**
  * TerraSacha SSO frontend entry point.
@@ -29,4 +31,8 @@ async function configureAmplify(): Promise<void> {
   }
 }
 
+// Configure Amplify (best-effort) and render the launcher independently. The
+// launcher must appear even when amplify_outputs.json is absent, so its mount
+// does not await / depend on configureAmplify() succeeding.
 void configureAmplify();
+mountAppLauncher();
