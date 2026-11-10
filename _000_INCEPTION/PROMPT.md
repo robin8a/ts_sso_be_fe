@@ -59,3 +59,6 @@ etc.
 ## Help to create the Ux/UI where shows the TerraSacha Aplications use the look and fill from https://terrasacha.com/ 
 
 - List with Icons on array 3 x 3, every application then redirect to one of them
+
+
+## Could you create the documentation: how to implement the SSO on new applications in the folder "001_DOCS/sso_new_web_app.md"
